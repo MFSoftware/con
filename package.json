@@ -1,0 +1,40 @@
+{
+  "name": "codamopennetwork",
+  "version": "1.0.0",
+  "description": "s",
+  "main": "index.js",
+  "scripts": {
+    "build": "babel src -d build",
+    "start": "node index.js",
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MFSoftware/CodamOpenNetwork.git"
+  },
+  "keywords": [
+    "net",
+    "network",
+    "codam"
+  ],
+  "author": "MagicFun1241",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MFSoftware/CodamOpenNetwork/issues"
+  },
+  "homepage": "https://github.com/MFSoftware/CodamOpenNetwork#readme",
+  "dependencies": {
+    "@hapi/joi": "^16.1.7",
+    "fastify": "^2.10.0",
+    "jsonwebtoken": "^8.5.1",
+    "uuid": "^3.3.3",
+    "validator": "^12.0.0",
+    "ws": "^7.2.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/preset-env": "^7.6.3",
+    "mocha": "^6.2.2"
+  }
+}
