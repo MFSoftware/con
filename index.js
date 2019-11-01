@@ -7,10 +7,10 @@ const fastify = require('fastify')({ logger: false });
 
 // Start websocket server
 const wss = new WebSocketServer({ port: 8080 });
-// Start websocket api
-const wsapi = new WebSocketAPI();
 
-// Load websocket routes
+// Start websocket api
+const wsapi = new WebSocketAPI;
+// Load websocket api routes
 require('./build/routes/ws').default(wsapi);
 
 // Array of connected users

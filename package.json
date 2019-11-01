@@ -6,7 +6,8 @@
   "scripts": {
     "build": "babel src -d build",
     "start": "node index.js",
-    "test": "mocha"
+    "test": "mocha",
+    "dev": "nodemon index.js"
   },
   "repository": {
     "type": "git",
@@ -15,7 +16,8 @@
   "keywords": [
     "net",
     "network",
-    "codam"
+    "codam",
+    "private"
   ],
   "author": "MagicFun1241",
   "license": "MIT",
@@ -35,6 +37,8 @@
     "@babel/cli": "^7.6.4",
     "@babel/core": "^7.6.4",
     "@babel/preset-env": "^7.6.3",
-    "mocha": "^6.2.2"
+    "@babel/preset-typescript": "^7.6.0",
+    "mocha": "^6.2.2",
+    "nodemon": "^1.19.4"
   }
 }
