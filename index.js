@@ -5,6 +5,8 @@ const WebSocketAPI = require('./build/libs/websocketApi').default;
 const uuidv1 = require('uuid/v1');
 const validator = require('validator');
 const fastify = require('fastify')({ logger: false });
+fastify.register(require('./middleware/jwt'));
+fastify.register(require('fastify-helmet'));
 
 // Start websocket server
 const wss = new WebSocketServer({ port: 8080 });
@@ -35,7 +37,7 @@ wss.on('connection', (ws, req) => {
     }).validate(JSON.parse(data)).error == null) {
       data = JSON.parse(data);
       delete data.type;
-      
+
       wsapi.parseEvent(data.type, data);
     }
   });
