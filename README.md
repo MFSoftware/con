@@ -23,4 +23,4 @@ npm run test
 ```
 
 ## License
-MIT
+[MIT](https://github.com/MFSoftware/con/blob/master/LICENSE)
