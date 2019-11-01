@@ -1,3 +1,4 @@
+const Joi = require('@hapi/joi');
 const WebSocketServer = require('ws').Server;
 const WebSocketAPI = require('./build/libs/websocketApi').default;
 
@@ -15,7 +16,7 @@ require('./build/routes/ws').default(wsapi);
 
 // Array of connected users
 let clients = [];
-const { sendAll } = require('./build/websocketFunctions');
+const { sendAll } = require('./build/websocketFunctions').default;
 
 wss.on('connection', (ws, req) => {
   let ip = req.connection.remoteAddress;
@@ -23,17 +24,20 @@ wss.on('connection', (ws, req) => {
   let id = clients.length;
 
   ws.on('message', data => {
-    if (!validator.isJSON(data) || false) {
+    if (!validator.isJSON(data)) {
       ws.close();
       delete clients[id];
       return;
     }
 
-    data = JSON.parse(data);
-
-    // TODO: Add data validation
-
-    wsapi.parseEvent(data.type, data);
+    if (Joi.object({
+      type: Joi.string().valid('new_message').required()
+    }).validate(JSON.parse(data)).error == null) {
+      data = JSON.parse(data);
+      delete data.type;
+      
+      wsapi.parseEvent(data.type, data);
+    }
   });
 
   ws.on('close', () => {
