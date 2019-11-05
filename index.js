@@ -2,9 +2,18 @@ const Joi = require('@hapi/joi');
 const WebSocketServer = require('ws').Server;
 const WebSocketAPI = require('./build/libs/websocketApi').default;
 
+const mongoose = require('mongoose');
 const uuidv1 = require('uuid/v1');
 const validator = require('validator');
 const fastify = require('fastify')({ logger: false });
+
+// Connect to MongoDB server
+mongoose.connect('mongodb://localhost:27017/codamon', { 
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+
+// Setup HTTP server plugins
 fastify.register(require('./middleware/jwt'));
 fastify.register(require('fastify-helmet'));
 
