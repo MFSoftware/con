@@ -1,11 +1,9 @@
 const Joi = require('@hapi/joi');
-const WebSocketServer = require('ws').Server;
 const WebSocketAPI = require('./build/libs/websocketApi').default;
 
 const mongoose = require('mongoose');
-const uuidv1 = require('uuid/v1');
-const validator = require('validator');
 const fastify = require('fastify')({ logger: false });
+const { sendAll } = require('./build/websocketFunctions').default;
 
 // Connect to MongoDB server
 mongoose.connect('mongodb://localhost:27017/codamon', { 
@@ -13,53 +11,26 @@ mongoose.connect('mongodb://localhost:27017/codamon', {
   useUnifiedTopology: true
 });
 
-// Setup HTTP server plugins
-fastify.register(require('./middleware/jwt'));
-fastify.register(require('fastify-helmet'));
-
-// Start websocket server
-const wss = new WebSocketServer({ port: 8080 });
-
-// Start websocket api
-const wsapi = new WebSocketAPI;
-// Load websocket api routes
-require('./build/routes/ws').default(wsapi);
-
-// Array of connected users
-let clients = [];
-const { sendAll } = require('./build/websocketFunctions').default;
-
-wss.on('connection', (ws, req) => {
-  let ip = req.connection.remoteAddress;
-  let uuid = uuidv1();
-  let id = clients.length;
-
-  ws.on('message', data => {
-    if (!validator.isJSON(data)) {
-      ws.close();
-      delete clients[id];
-      return;
-    }
-
-    if (Joi.object({
-      type: Joi.string().valid('new_message').required()
-    }).validate(JSON.parse(data)).error == null) {
-      data = JSON.parse(data);
-      delete data.type;
-
-      wsapi.parseEvent(data.type, data);
-    }
-  });
-
-  ws.on('close', () => {
-    delete clients[id];
-  });
-
-  sendAll(clients, JSON.stringify({ type: 'new_client' }));
-  clients.push({ uuid, ip, ws });
+// Set handler for 404 page
+fastify.setNotFoundHandler((request, reply) => {
+  reply.code(404).type('text/plain').send('a custom not found');
 });
 
-// Include routes from builded ES5 code
+require('./plugins')(fastify);
+
+// Start websocket api
+const wsapi = new WebSocketAPI({ port: 8080 });
+//wsapi.on('postConnection', () => sendAll(clients, JSON.stringify({ type: 'new_client' })));
+wsapi.on('echo', {
+  text: Joi.string().required()
+}, data => {
+  console.log(data.text);
+});
+
+// Load websocket api routes
+//require('./build/routes/ws').default(wsapi);
+
+// Include routes from builded code
 require('./build/routes/api').default(fastify);
 
 const start = async () => {

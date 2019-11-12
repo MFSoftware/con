@@ -5,5 +5,8 @@
       { "targets": { "node": "10" } }
     ], 
     "@babel/preset-typescript"
+  ],
+  "plugins": [
+    "@babel/plugin-proposal-private-methods"
   ]
 }

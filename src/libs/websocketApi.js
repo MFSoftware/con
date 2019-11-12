@@ -1,22 +1,85 @@
 import validator from 'validator';
+import uuidv1 from 'uuid/v1';
+
+import Joi from '@hapi/joi';
+import WebSocket from 'ws';
 
 export default class WebSocketAPI {
-    constructor() {
-        this.list = [];
+    constructor(opts = {}) {
+        // Websocket server
+        this.wss = new WebSocket.Server(opts);
+
+        // Array of connected users
+        this.clients = [];
+        // List of event handlers
+        this._list = [];
+
+        // API events
+        this._connectionHandlers = [];
+        this._postConnectionHandlers = [];
+
+        this.wss.on('connection', (ws, req) => {
+            let ip = req.connection.remoteAddress;
+            let uuid = uuidv1();
+            let id = this.clients.length;
+
+            for (let i = 0; i < this._connectionHandlers.length; i++)
+                this._connectionHandlers[i]({ ip, uuid, ws });
+          
+            ws.on('message', data => {
+              if (!validator.isJSON(data)) {
+                ws.close();
+                delete this.clients[id];
+                return;
+              }
+          
+              for (let i = 0; i < this._list.length; i++) {
+                  const eventObj = this._list[i];
+
+                  if (eventObj.schema['type'] == undefined)
+                    eventObj.schema['type'] = Joi.string().required()
+
+                  if (Joi.object(eventObj.schema).validate(JSON.parse(data)).error == null) {
+                    data = JSON.parse(data);
+                    let type = data.type;
+                    delete data.type;
+              
+                    this._executeEvent(type, data);
+                    break;
+                  }
+              }
+            });
+          
+            ws.on('close', () => delete clients[id]);
+          
+            for (let i = 0; i < this._postConnectionHandlers.length; i++)
+                this._postConnectionHandlers[i]();
+
+            this.clients.push({ uuid, ip, ws });
+        });
     }
 
-    on(event, callback) {
-        this.list.push({ name: event, callback });
+    on(event, schema = {
+        type: Joi.string()
+    }, callback) {
+        switch (event) {
+            case 'postConnection':
+                this._postConnectionHandlers.push(callback);
+                break;
+            case 'connection':
+                this._connectionHandlers.push(callback);
+                break;
+            default:
+                this._list.push({ name: event, callback, schema });
+                break;
+        }
     }
 
-    parseEvent(name, data) {
-        if (validator.isJSON(data))
-            data = JSON.parse(data);
+    executeEvent(name, data) {
+        let searched = this._list.find(element => element.name === name);
 
-        let searched = this.list.find(element => element.name === name);
+        if (searched == null) return;
 
-        if (searched == null) return false;
-
-        searched.callback(searched.data);
+        searched.callback(data);
     }
 }

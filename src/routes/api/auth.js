@@ -1,6 +1,7 @@
 import speakeasy from 'speakeasy';
 import validator from 'validator';
 import jwt from 'jsonwebtoken';
+import createError from 'http-errors';
 import config from '../../../config';
 
 import QRCode from 'qrcode';
@@ -8,7 +9,6 @@ import User from '../../schemas/user';
 import Token from '../../schemas/token';
 
 export default fastify => {
-
     fastify.post('/api/auth/register', {
         body: {
             email: {
@@ -33,14 +33,8 @@ export default fastify => {
             });
             return;
         }
-        else if (!validator.isHash(request.body.password, 'sha512')) {
-            reply.send({ 
-                statusCode: 500, 
-                error: 'Internal Server Error',
-                message: 'Password must be SHA512 hash'
-            });
-            return;
-        }
+        else if (!validator.isHash(request.body.password, 'sha512'))
+            throw fastify.httpErrors.internalServerError('Password must be sha512 hash');
 
         User.findOne({ username: request.body.username }, (err, eusr) => {
             if (eusr == null) {
@@ -64,18 +58,22 @@ export default fastify => {
         });
     });
 
-    /*fastify.post('/api/settings/2fa', {
-        preValidation: [fastify.authenticate]
+    fastify.post('/api/settings/2fa', {
+        schema: {
+            body: {
+                test: 'string'
+            }
+        }
     }, async (request, reply) => {
+        fastify.authenticate(request, reply);
+
         let secret = speakeasy.generateSecret({ length: 20 });
-        QRCode.toDataURL(secret.otpauth_url, function(err, image_data) {
-            reply.send({ result: true, qr: image_data });
+        QRCode.toDataURL(secret.otpauth_url, (err, image_data) => {
+            reply.send({ qr: image_data });
         });
     });
 
-    fastify.delete('/api/settings/2fa', {
-        preValidation: [fastify.authenticate]
-    }, async (request, reply) => {
-
-    });*/
+    fastify.delete('/api/settings/2fa', async (request, reply) => {
+        fastify.authenticate(request, reply);
+    });
 }
