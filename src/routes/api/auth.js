@@ -1,12 +1,9 @@
-import speakeasy from 'speakeasy';
 import validator from 'validator';
 import jwt from 'jsonwebtoken';
 import createError from 'http-errors';
 import config from '../../../config';
 
-import QRCode from 'qrcode';
 import User from '../../schemas/user';
-import Token from '../../schemas/token';
 
 export default fastify => {
     fastify.post('/api/auth/register', {
@@ -56,24 +53,5 @@ export default fastify => {
             }
             else reply.send({ result: false, message: 'User already exists' });
         });
-    });
-
-    fastify.post('/api/settings/2fa', {
-        schema: {
-            body: {
-                test: 'string'
-            }
-        }
-    }, async (request, reply) => {
-        fastify.authenticate(request, reply);
-
-        let secret = speakeasy.generateSecret({ length: 20 });
-        QRCode.toDataURL(secret.otpauth_url, (err, image_data) => {
-            reply.send({ qr: image_data });
-        });
-    });
-
-    fastify.delete('/api/settings/2fa', async (request, reply) => {
-        fastify.authenticate(request, reply);
     });
 }

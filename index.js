@@ -1,41 +1,32 @@
-const Joi = require('@hapi/joi');
+const development = process.env.PRODUCTION === 'development';
+
 const WebSocketAPI = require('./build/libs/websocketApi').default;
 
 const mongoose = require('mongoose');
-const fastify = require('fastify')({ logger: false });
-const { sendAll } = require('./build/websocketFunctions').default;
+const fastify = require('fastify')({ logger: development });
+//const server = require('http').Server(fastify);
+//const switchboard = require('rtc-switchboard')(server);
 
 // Connect to MongoDB server
-mongoose.connect('mongodb://localhost:27017/codamon', { 
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
-
-// Set handler for 404 page
-fastify.setNotFoundHandler((request, reply) => {
-  reply.code(404).type('text/plain').send('a custom not found');
+mongoose.connect('mongodb://localhost:27017/codamon', {
+  useCreateIndex: true,
+	useNewUrlParser: true,
+	useUnifiedTopology: true
 });
 
 require('./plugins')(fastify);
 
-// Start websocket api
-const wsapi = new WebSocketAPI({ port: 8080 });
-//wsapi.on('postConnection', () => sendAll(clients, JSON.stringify({ type: 'new_client' })));
-wsapi.on('echo', {
-  text: Joi.string().required()
-}, data => {
-  console.log(data.text);
-});
+// TODO: Start websocket api
 
-// Load websocket api routes
-//require('./build/routes/ws').default(wsapi);
+// Load builded websocket api routes
+// require('./build/routes/ws').default(wsapi);
 
 // Include routes from builded code
 require('./build/routes/api').default(fastify);
 
 const start = async () => {
   try {
-    await fastify.listen(1241);
+    await fastify.listen(80);
     fastify.log.info(`Server listening on ${fastify.server.address().port}`);
   } 
   catch (err) {
@@ -46,3 +37,6 @@ const start = async () => {
 
 // Start HTTP server
 start();
+
+// For unit test
+if (development) module.exports = this;

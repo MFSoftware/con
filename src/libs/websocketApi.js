@@ -1,5 +1,6 @@
 import validator from 'validator';
 import uuidv1 from 'uuid/v1';
+import AES256 from './aes256';
 
 import Joi from '@hapi/joi';
 import WebSocket from 'ws';
@@ -34,17 +35,17 @@ export default class WebSocketAPI {
               }
           
               for (let i = 0; i < this._list.length; i++) {
-                  const eventObj = this._list[i];
+                  let eventObj = this._list[i];
 
                   if (eventObj.schema['type'] == undefined)
-                    eventObj.schema['type'] = Joi.string().required()
+                    eventObj.schema['type'] = Joi.string().required();
 
                   if (Joi.object(eventObj.schema).validate(JSON.parse(data)).error == null) {
                     data = JSON.parse(data);
                     let type = data.type;
                     delete data.type;
               
-                    this._executeEvent(type, data);
+                    this.executeEvent(type, data);
                     break;
                   }
               }
@@ -57,6 +58,11 @@ export default class WebSocketAPI {
 
             this.clients.push({ uuid, ip, ws });
         });
+
+        this.sendAll = message => {
+            for (let i = 0; i < this.clients.length; i++)
+                this.clients[i]['ws'].send(message);
+        }
     }
 
     on(event, schema = {
@@ -75,7 +81,7 @@ export default class WebSocketAPI {
         }
     }
 
-    executeEvent(name, data) {
+    async executeEvent(name, data) {
         let searched = this._list.find(element => element.name === name);
 
         if (searched == null) return;

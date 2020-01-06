@@ -1,5 +1,9 @@
+import Joi from '@hapi/joi';
+
 export default wsapi => {
-    wsapi.on('new_message', data => {
-        console.log('ok');
+    wsapi.on('message', {
+        text: Joi.string().required().max(64)
+    }, data => {
+        console.log(data);
     });
 }
